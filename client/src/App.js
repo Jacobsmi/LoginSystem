@@ -1,15 +1,21 @@
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Landing from './Landing/Landing';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Signup from "./Signup/Signup";
 
 export default function App() {
   const theme = createTheme({
     palette: {
       primary: {
-        main: "#4361EE"
+        main: "#264653",
+        contrastText: "#FFFFFF"
       },
       secondary: {
-        main: "#f72585"
+        main: "#2A9D8F"
+      },
+      third:{
+        main:"#FFFFFF",
+        contrastText: "#000000"
       }
     }
   })
@@ -18,6 +24,9 @@ export default function App() {
       <div className="App">
         <BrowserRouter>
           <Switch>
+            <Route path="/signup">
+              <Signup />
+            </Route>
             <Route exact path="/">
               <Landing />
             </Route>
