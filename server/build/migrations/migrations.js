@@ -39,28 +39,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var express_1 = __importDefault(require("express"));
+var pg_1 = require("pg");
 var dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config({
     path: "./.env",
 });
-var app = express_1.default();
-app.use(express_1.default.json());
-app.get("/", function (req, res) {
-    return res.send(JSON.stringify({
-        alive: true,
-    }));
+var pool = new pg_1.Pool({
+    user: process.env.DBUSER,
+    host: process.env.DBHOST,
+    database: process.env.DBNAME,
+    password: process.env.DBUSERPASSWORD,
+    port: parseInt(process.env.DBPORT),
 });
-app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+var createTables = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var client;
     return __generator(this, function (_a) {
-        // Step one query to see if the user exists in the database
-        return [2 /*return*/, res.send("In progress")];
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, pool.connect()];
+            case 1:
+                client = _a.sent();
+                return [4 /*yield*/, client.query("CREATE TABLE users(\n      id SERIAL,\n      first_name TEXT NOT NULL,\n      last_name TEXT NOT NULL,\n      email TEXT NOT NULL,\n      password NOT NULL\n    );")];
+            case 2:
+                _a.sent();
+                return [2 /*return*/];
+        }
     });
-}); });
-app
-    .listen(5000, function () {
-    console.log("Server listening at http://localhost:5000");
-})
-    .on("error", function (error) {
-    console.log(error.message);
-});
+}); };
+createTables();
