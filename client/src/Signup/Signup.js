@@ -72,7 +72,7 @@ export default function Signup() {
       <Box
         sx={{
           height: "80%",
-          width: "30%",
+          width: ["90%", "80%", "50%", "40%", "30%"],
           bgcolor: "white",
           borderRadius: "20px",
           textAlign: "center"
