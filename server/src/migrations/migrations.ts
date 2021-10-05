@@ -19,7 +19,7 @@ const pool = new Pool({
       id SERIAL,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
-      email TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL
     );`);
     client.release();

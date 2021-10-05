@@ -40,21 +40,69 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
+var pg_1 = require("pg");
 var dotenv_1 = __importDefault(require("dotenv"));
+var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+var startUpChecks_1 = __importDefault(require("./helpers/startUpChecks"));
 dotenv_1.default.config({
     path: "./.env",
 });
 var app = express_1.default();
 app.use(express_1.default.json());
+// Run a series of start up checks to ensure that all values are present
+startUpChecks_1.default();
+var pool = new pg_1.Pool({
+    user: process.env.DBUSER,
+    host: process.env.DBHOST,
+    database: process.env.DBNAME,
+    password: process.env.DBUSERPASSWORD,
+    port: parseInt(process.env.DBPORT),
+});
 app.get("/", function (req, res) {
     return res.send(JSON.stringify({
         alive: true,
     }));
 });
 app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var client, queryResult, userID, token, e_1;
     return __generator(this, function (_a) {
-        // Step one query to see if the user exists in the database
-        return [2 /*return*/, res.send("In progress")];
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, pool.connect()];
+            case 1:
+                client = _a.sent();
+                return [4 /*yield*/, client.query("INSERT INTO users(first_name, last_name, email, password) VALUES($1,$2,$3,$4) RETURNING id", [
+                        req.body.first_name,
+                        req.body.last_name,
+                        req.body.email,
+                        req.body.password,
+                    ])];
+            case 2:
+                queryResult = _a.sent();
+                client.release();
+                userID = queryResult.rows[0].id;
+                token = jsonwebtoken_1.default.sign({ id: userID }, process.env.JWTSECRETKEY);
+                console.log(token);
+                return [2 /*return*/, res.send(JSON.stringify({
+                        success: true,
+                    }))];
+            case 3:
+                e_1 = _a.sent();
+                if (e_1.message ===
+                    "duplicate key value violates unique constraint \"users_email_key\"") {
+                    return [2 /*return*/, res.send(JSON.stringify({
+                            success: false,
+                            err: "non-unqiue-email",
+                        }))];
+                }
+                console.log(e_1);
+                return [2 /*return*/, res.send(JSON.stringify({
+                        success: false,
+                        err: "db-error",
+                    }))];
+            case 4: return [2 /*return*/];
+        }
     });
 }); });
 app

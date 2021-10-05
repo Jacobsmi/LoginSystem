@@ -26,6 +26,7 @@
   DBNAME=logindb
   DBUSERPASSWORD=secretPassword01
   DBPORT=5432
+  JWTSECRETKEY=secretkey13431515
   ```
 - Next, run the migration script to create the proper tables in the database with `node ./build/migrations/migrations.js`
   - It is important to note that all calls must be done from the server directory so that the current working directory is correct and relative pathing in code work properly

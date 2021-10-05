@@ -58,14 +58,13 @@ var pool = new pg_1.Pool({
             case 0: return [4 /*yield*/, pool.connect()];
             case 1:
                 client = _a.sent();
-                return [4 /*yield*/, client.query("CREATE TABLE IF NOT EXISTS users(\n      id SERIAL,\n      first_name TEXT NOT NULL,\n      last_name TEXT NOT NULL,\n      email TEXT NOT NULL,\n      password TEXT NOT NULL\n    );")];
+                return [4 /*yield*/, client.query("CREATE TABLE IF NOT EXISTS users(\n      id SERIAL,\n      first_name TEXT NOT NULL,\n      last_name TEXT NOT NULL,\n      email TEXT UNIQUE NOT NULL,\n      password TEXT NOT NULL\n    );")];
             case 2:
                 _a.sent();
                 client.release();
                 return [4 /*yield*/, pool.end()];
             case 3:
                 _a.sent();
-                console.log("Created tables");
                 return [2 /*return*/, true];
         }
     });
