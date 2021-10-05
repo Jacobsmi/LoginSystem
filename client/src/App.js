@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Landing from './Landing/Landing';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Signup from "./Signup/Signup";
+import Homepage from "./Homepage/Homepage";
 
 export default function App() {
   const theme = createTheme({
@@ -24,6 +25,9 @@ export default function App() {
       <div className="App">
         <BrowserRouter>
           <Switch>
+            <Switch path="/home">
+              <Homepage />
+            </Switch>
             <Route path="/signup">
               <Signup />
             </Route>

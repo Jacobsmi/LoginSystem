@@ -6,18 +6,25 @@ import startUpChecks from "./helpers/startUpChecks";
 import bcrypt, { hash } from "bcrypt";
 import cors from "cors";
 
+// Setting up dotenv so the script can read .env variables that should not be hard coded
 dotenv.config({
   path: "./.env",
 });
 
+// Create the express app itself
 const app = express();
 
+// Set up the middleware that the app will use
+// Express JSON is built in middleware that allows for easy parsing of JSON in POST request bodies
 app.use(express.json());
+// CORS middleware allows us to easily enable CORS for all routes without having to program headers by hand
 app.use(cors({origin: "http://localhost:3000", credentials: true}));
 
 // Run a series of start up checks to ensure that all values are present
 startUpChecks();
 
+// Create a pool for the database connection
+// DBPORT is forced to not be null but a value is guaranteed in the startUpCheck function
 const pool = new Pool({
   user: process.env.DBUSER,
   host: process.env.DBHOST,
@@ -26,6 +33,7 @@ const pool = new Pool({
   port: parseInt(process.env.DBPORT!),
 });
 
+// Simple route to see if the server is alive
 app.get("/", (req: Request, res: Response): Response => {
   return res.send(
     JSON.stringify({
@@ -34,13 +42,18 @@ app.get("/", (req: Request, res: Response): Response => {
   );
 });
 
+// Create user route is called from the frontend in the signup phase 
+// body values are guaranteed present and valid from client side validation
 app.post(
   "/createuser",
   async (req: Request, res: Response): Promise<Response> => {
     try {
+      // Step 1 hash password with bcrypt
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
       // Attempt to insert the user sent in the POST request into the database usign a pg pool client
+      // Create the pg client
       const client = await pool.connect();
+      // Execute the parameterized query
       const queryResult = await client.query(
         "INSERT INTO users(first_name, last_name, email, password) VALUES($1,$2,$3,$4) RETURNING id",
         [
@@ -50,6 +63,7 @@ app.post(
           hashedPassword,
         ]
       );
+      // Release the client and return to the pool
       client.release();
 
       // Get the user ID returned from the insert
@@ -59,7 +73,9 @@ app.post(
         { id: userID },
         process.env.JWTSECRETKEY!
       );
-
+      // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
+      res.setHeader("Set-Cookie", `id=${token}; HttpOnly; Secure;`);
+      // Send a successful response
       return res.send(
         JSON.stringify({
           success: true,
@@ -87,6 +103,8 @@ app.post(
     }
   }
 );
+
+app.get("/userinfo")
 
 app
   .listen(5000, (): void => {

@@ -46,14 +46,21 @@ var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var startUpChecks_1 = __importDefault(require("./helpers/startUpChecks"));
 var bcrypt_1 = __importDefault(require("bcrypt"));
 var cors_1 = __importDefault(require("cors"));
+// Setting up dotenv so the script can read .env variables that should not be hard coded
 dotenv_1.default.config({
     path: "./.env",
 });
+// Create the express app itself
 var app = express_1.default();
+// Set up the middleware that the app will use
+// Express JSON is built in middleware that allows for easy parsing of JSON in POST request bodies
 app.use(express_1.default.json());
+// CORS middleware allows us to easily enable CORS for all routes without having to program headers by hand
 app.use(cors_1.default({ origin: "http://localhost:3000", credentials: true }));
 // Run a series of start up checks to ensure that all values are present
 startUpChecks_1.default();
+// Create a pool for the database connection
+// DBPORT is forced to not be null but a value is guaranteed in the startUpCheck function
 var pool = new pg_1.Pool({
     user: process.env.DBUSER,
     host: process.env.DBHOST,
@@ -61,11 +68,14 @@ var pool = new pg_1.Pool({
     password: process.env.DBUSERPASSWORD,
     port: parseInt(process.env.DBPORT),
 });
+// Simple route to see if the server is alive
 app.get("/", function (req, res) {
     return res.send(JSON.stringify({
         alive: true,
     }));
 });
+// Create user route is called from the frontend in the signup phase 
+// body values are guaranteed present and valid from client side validation
 app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var hashedPassword, client, queryResult, userID, token, e_1;
     return __generator(this, function (_a) {
@@ -86,9 +96,13 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                     ])];
             case 3:
                 queryResult = _a.sent();
+                // Release the client and return to the pool
                 client.release();
                 userID = queryResult.rows[0].id;
                 token = jsonwebtoken_1.default.sign({ id: userID }, process.env.JWTSECRETKEY);
+                // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
+                res.setHeader("Set-Cookie", "id=" + token + "; HttpOnly; Secure;");
+                // Send a successful response
                 return [2 /*return*/, res.send(JSON.stringify({
                         success: true,
                     }))];

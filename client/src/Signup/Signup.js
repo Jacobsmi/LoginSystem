@@ -57,6 +57,8 @@ export default function Signup() {
     setValidEmail(email)
     setValidPassword(password)
     setValidConfirm((confirm === password ? true : false))
+    
+    document.getElementById("Signup-Errors").innerHTML = ""
 
     if (nameRegex.test(firstName) && nameRegex.test(lastName) && emailRegex.test(email) && passwordRegex.test(password) && confirm === password) {
       const apiResult = await fetch("http://localhost:5000/createuser", {
@@ -76,12 +78,16 @@ export default function Signup() {
       const apiResultJSON = await apiResult.json();
       console.log(apiResultJSON)
       // Handle a successful API call by re-routing to the homepage
-      if (apiResultJSON.success === true){
+      if (apiResultJSON.success === true) {
         history.push("/home");
-      }else if (apiResultJSON.success === false){
-        if(apiResultJSON.err === "non-unqiue-email"){
+      } else if (apiResultJSON.success === false) {
+        // Handle API errors
+        // If the email is not unique set validity of email to false and set unique email to false which displays the proper helper text
+        if (apiResultJSON.err === "non-unqiue-email") {
           setUniqueEmail(false)
           setValidEmail(false)
+        } else {
+          document.getElementById("Signup-Errors").innerHTML = "Some error occurred on the server"
         }
       }
     }
@@ -113,6 +119,12 @@ export default function Signup() {
           variant="h4"
           sx={{ marginBottom: "5%", marginTop: "5%" }}
         >Sign Up</Typography>
+
+        <Typography
+          variant="h4"
+          sx={{ marginBottom: "5%", marginTop: "5%" }}
+          id="Signup-Errors"
+        ></Typography>
 
 
         <TextField
@@ -150,7 +162,7 @@ export default function Signup() {
           required
           variant="standard"
           label="E-Mail"
-          helperText={uniqueEmail? "": "Email is already in use"}
+          helperText={uniqueEmail ? "" : "Email is already in use"}
           type="email"
           sx={{
             width: "90%",
