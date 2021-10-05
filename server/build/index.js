@@ -44,6 +44,7 @@ var pg_1 = require("pg");
 var dotenv_1 = __importDefault(require("dotenv"));
 var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var startUpChecks_1 = __importDefault(require("./helpers/startUpChecks"));
+var bcrypt_1 = __importDefault(require("bcrypt"));
 dotenv_1.default.config({
     path: "./.env",
 });
@@ -64,13 +65,17 @@ app.get("/", function (req, res) {
     }));
 });
 app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var client, queryResult, userID, token, e_1;
+    var hashedPassword, client, queryResult, userID, token, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 3, , 4]);
-                return [4 /*yield*/, pool.connect()];
+                _a.trys.push([0, 4, , 5]);
+                return [4 /*yield*/, bcrypt_1.default.hash(req.body.password, 10)];
             case 1:
+                hashedPassword = _a.sent();
+                console.log("Hashed password" + hashedPassword);
+                return [4 /*yield*/, pool.connect()];
+            case 2:
                 client = _a.sent();
                 return [4 /*yield*/, client.query("INSERT INTO users(first_name, last_name, email, password) VALUES($1,$2,$3,$4) RETURNING id", [
                         req.body.first_name,
@@ -78,7 +83,7 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                         req.body.email,
                         req.body.password,
                     ])];
-            case 2:
+            case 3:
                 queryResult = _a.sent();
                 client.release();
                 userID = queryResult.rows[0].id;
@@ -87,7 +92,7 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                 return [2 /*return*/, res.send(JSON.stringify({
                         success: true,
                     }))];
-            case 3:
+            case 4:
                 e_1 = _a.sent();
                 if (e_1.message ===
                     "duplicate key value violates unique constraint \"users_email_key\"") {
@@ -101,7 +106,7 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                         success: false,
                         err: "db-error",
                     }))];
-            case 4: return [2 /*return*/];
+            case 5: return [2 /*return*/];
         }
     });
 }); });

@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import dotenv from "dotenv";
 import jsonwebtoken from "jsonwebtoken";
 import startUpChecks from "./helpers/startUpChecks";
+import bcrypt, { hash } from "bcrypt";
 
 dotenv.config({
   path: "./.env",
@@ -35,6 +36,7 @@ app.post(
   "/createuser",
   async (req: Request, res: Response): Promise<Response> => {
     try {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
       // Attempt to insert the user sent in the POST request into the database usign a pg pool client
       const client = await pool.connect();
       const queryResult = await client.query(
@@ -43,7 +45,7 @@ app.post(
           req.body.first_name,
           req.body.last_name,
           req.body.email,
-          req.body.password,
+          hashedPassword,
         ]
       );
       client.release();
@@ -51,8 +53,8 @@ app.post(
       // Get the user ID returned from the insert
       const userID = queryResult.rows[0].id;
       // Then turn the ID into a JWT
-      var token = jsonwebtoken.sign({ id: userID }, process.env.JWTSECRETKEY!);
-      console.log(token);
+      const token = jsonwebtoken.sign({ id: userID }, process.env.JWTSECRETKEY!);
+
       return res.send(
         JSON.stringify({
           success: true,
