@@ -51,18 +51,22 @@ var pool = new pg_1.Pool({
     password: process.env.DBUSERPASSWORD,
     port: parseInt(process.env.DBPORT),
 });
-var createTables = function () { return __awaiter(void 0, void 0, void 0, function () {
+(function () { return __awaiter(void 0, void 0, void 0, function () {
     var client;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, pool.connect()];
             case 1:
                 client = _a.sent();
-                return [4 /*yield*/, client.query("CREATE TABLE users(\n      id SERIAL,\n      first_name TEXT NOT NULL,\n      last_name TEXT NOT NULL,\n      email TEXT NOT NULL,\n      password NOT NULL\n    );")];
+                return [4 /*yield*/, client.query("CREATE TABLE IF NOT EXISTS users(\n      id SERIAL,\n      first_name TEXT NOT NULL,\n      last_name TEXT NOT NULL,\n      email TEXT NOT NULL,\n      password TEXT NOT NULL\n    );")];
             case 2:
                 _a.sent();
-                return [2 /*return*/];
+                client.release();
+                return [4 /*yield*/, pool.end()];
+            case 3:
+                _a.sent();
+                console.log("Created tables");
+                return [2 /*return*/, true];
         }
     });
-}); };
-createTables();
+}); })();

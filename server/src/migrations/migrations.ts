@@ -13,15 +13,16 @@ const pool = new Pool({
   port: parseInt(process.env.DBPORT!),
 });
 
-const createTables = async () => {
+(async ():Promise<boolean> => {
   const client = await pool.connect();
-  await client.query(`CREATE TABLE users(
+  await client.query(`CREATE TABLE IF NOT EXISTS users(
       id SERIAL,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
       email TEXT NOT NULL,
-      password NOT NULL
+      password TEXT NOT NULL
     );`);
-};
-
-createTables();
+    client.release();
+    await pool.end();
+    return true;
+})();
