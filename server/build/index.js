@@ -45,11 +45,13 @@ var dotenv_1 = __importDefault(require("dotenv"));
 var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var startUpChecks_1 = __importDefault(require("./helpers/startUpChecks"));
 var bcrypt_1 = __importDefault(require("bcrypt"));
+var cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config({
     path: "./.env",
 });
 var app = express_1.default();
 app.use(express_1.default.json());
+app.use(cors_1.default({ origin: "http://localhost:3000", credentials: true }));
 // Run a series of start up checks to ensure that all values are present
 startUpChecks_1.default();
 var pool = new pg_1.Pool({
@@ -73,7 +75,6 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                 return [4 /*yield*/, bcrypt_1.default.hash(req.body.password, 10)];
             case 1:
                 hashedPassword = _a.sent();
-                console.log("Hashed password" + hashedPassword);
                 return [4 /*yield*/, pool.connect()];
             case 2:
                 client = _a.sent();
@@ -81,14 +82,13 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                         req.body.first_name,
                         req.body.last_name,
                         req.body.email,
-                        req.body.password,
+                        hashedPassword,
                     ])];
             case 3:
                 queryResult = _a.sent();
                 client.release();
                 userID = queryResult.rows[0].id;
                 token = jsonwebtoken_1.default.sign({ id: userID }, process.env.JWTSECRETKEY);
-                console.log(token);
                 return [2 /*return*/, res.send(JSON.stringify({
                         success: true,
                     }))];

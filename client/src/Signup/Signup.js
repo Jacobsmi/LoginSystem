@@ -1,7 +1,11 @@
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
+import { useHistory } from "react-router-dom";
 
 export default function Signup() {
+
+  const history = useHistory();
+
   // State to track values and validity of values
   // State is used to track values because it allows for easy updating on validity of fields in real-time
   // and allows for the value of inputs to easily be accessed throughout the function
@@ -13,6 +17,7 @@ export default function Signup() {
 
   const [email, setEmail] = useState('')
   const [validEmail, setValidEmail] = useState(true)
+  const [uniqueEmail, setUniqueEmail] = useState(true)
 
   const [password, setPassword] = useState('')
   const [validPassword, setValidPassword] = useState(true)
@@ -36,6 +41,7 @@ export default function Signup() {
     } else if (event.target.id === "Signup-Email") {
       setEmail(event.target.value)
       setValidEmail(emailRegex.test(event.target.value))
+      setUniqueEmail(true)
     } else if (event.target.id === "Signup-Password") {
       setPassword(event.target.value)
       setValidPassword(passwordRegex.test(event.target.value))
@@ -45,7 +51,7 @@ export default function Signup() {
     }
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
     setValidFirstName(firstName)
     setValidLastName(lastName)
     setValidEmail(email)
@@ -53,7 +59,31 @@ export default function Signup() {
     setValidConfirm((confirm === password ? true : false))
 
     if (nameRegex.test(firstName) && nameRegex.test(lastName) && emailRegex.test(email) && passwordRegex.test(password) && confirm === password) {
-      console.log("Ready for API call");
+      const apiResult = await fetch("http://localhost:5000/createuser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          password: password
+        }),
+        credentials: "include",
+
+      })
+      const apiResultJSON = await apiResult.json();
+      console.log(apiResultJSON)
+      // Handle a successful API call by re-routing to the homepage
+      if (apiResultJSON.success === true){
+        history.push("/home");
+      }else if (apiResultJSON.success === false){
+        if(apiResultJSON.err === "non-unqiue-email"){
+          setUniqueEmail(false)
+          setValidEmail(false)
+        }
+      }
     }
   }
 
@@ -120,6 +150,7 @@ export default function Signup() {
           required
           variant="standard"
           label="E-Mail"
+          helperText={uniqueEmail? "": "Email is already in use"}
           type="email"
           sx={{
             width: "90%",

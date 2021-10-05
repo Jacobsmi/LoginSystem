@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import jsonwebtoken from "jsonwebtoken";
 import startUpChecks from "./helpers/startUpChecks";
 import bcrypt, { hash } from "bcrypt";
+import cors from "cors";
 
 dotenv.config({
   path: "./.env",
@@ -12,6 +13,7 @@ dotenv.config({
 const app = express();
 
 app.use(express.json());
+app.use(cors({origin: "http://localhost:3000", credentials: true}));
 
 // Run a series of start up checks to ensure that all values are present
 startUpChecks();
@@ -53,7 +55,10 @@ app.post(
       // Get the user ID returned from the insert
       const userID = queryResult.rows[0].id;
       // Then turn the ID into a JWT
-      const token = jsonwebtoken.sign({ id: userID }, process.env.JWTSECRETKEY!);
+      const token = jsonwebtoken.sign(
+        { id: userID },
+        process.env.JWTSECRETKEY!
+      );
 
       return res.send(
         JSON.stringify({
