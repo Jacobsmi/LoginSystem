@@ -24,5 +24,6 @@ const pool = new Pool({
     );`);
     client.release();
     await pool.end();
+    console.log("Created tables");
     return true;
 })();

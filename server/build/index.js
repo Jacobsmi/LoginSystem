@@ -74,7 +74,7 @@ app.get("/", function (req, res) {
         alive: true,
     }));
 });
-// Create user route is called from the frontend in the signup phase 
+// Create user route is called from the frontend in the signup phase
 // body values are guaranteed present and valid from client side validation
 app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var hashedPassword, client, queryResult, userID, token, e_1;
@@ -99,7 +99,9 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                 // Release the client and return to the pool
                 client.release();
                 userID = queryResult.rows[0].id;
-                token = jsonwebtoken_1.default.sign({ id: userID }, process.env.JWTSECRETKEY);
+                token = jsonwebtoken_1.default.sign({
+                    id: userID
+                }, process.env.JWTSECRETKEY, { expiresIn: 60 * 60 });
                 // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
                 res.setHeader("Set-Cookie", "id=" + token + "; HttpOnly; Secure;");
                 // Send a successful response
@@ -122,6 +124,23 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                     }))];
             case 5: return [2 /*return*/];
         }
+    });
+}); });
+app.get("/userinfo", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var jwt, decoded;
+    return __generator(this, function (_a) {
+        try {
+            jwt = req.headers.cookie.split("=")[1];
+            decoded = jsonwebtoken_1.default.verify(jwt, process.env.JWTSECRETKEY);
+            console.log(decoded);
+            /*const client = await pool.connect();
+            const result = await client.query("SELECT first_name, last_name, email FROM users WHERE id=$1", [userID]);
+            */
+        }
+        catch (e) {
+            console.log(e);
+        }
+        return [2 /*return*/, res.send("In progress")];
     });
 }); });
 app

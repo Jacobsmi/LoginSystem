@@ -1,14 +1,18 @@
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, } from "react";
 
 export default function Homepage(){
 
-  const [firstName, setFirstName] = useState('')
+  //const [firstName, setFirstName] = useState('')
 
   useEffect(()=>{
     (async () =>{
-      /*const res = await fetch("http://localhost:5000/userInfo");
-      const apiResJson = await res.json();*/
+      const res = await fetch("http://localhost:5000/userInfo",{
+        method:"GET",
+        credentials: "include"
+      });
+      const apiResJson = await res.json();
+      console.log(apiResJson)
       
     })();
   })
@@ -21,7 +25,7 @@ export default function Homepage(){
         bgcolor: "primary.main"
       }}
       >
-        Welcome, {firstName}
+        Welcome
       </Box>
   )
 }

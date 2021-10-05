@@ -65,6 +65,7 @@ var pool = new pg_1.Pool({
                 return [4 /*yield*/, pool.end()];
             case 3:
                 _a.sent();
+                console.log("Created tables");
                 return [2 /*return*/, true];
         }
     });

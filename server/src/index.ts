@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { json, Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import jsonwebtoken from "jsonwebtoken";
@@ -18,7 +18,7 @@ const app = express();
 // Express JSON is built in middleware that allows for easy parsing of JSON in POST request bodies
 app.use(express.json());
 // CORS middleware allows us to easily enable CORS for all routes without having to program headers by hand
-app.use(cors({origin: "http://localhost:3000", credentials: true}));
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 // Run a series of start up checks to ensure that all values are present
 startUpChecks();
@@ -42,7 +42,7 @@ app.get("/", (req: Request, res: Response): Response => {
   );
 });
 
-// Create user route is called from the frontend in the signup phase 
+// Create user route is called from the frontend in the signup phase
 // body values are guaranteed present and valid from client side validation
 app.post(
   "/createuser",
@@ -69,10 +69,9 @@ app.post(
       // Get the user ID returned from the insert
       const userID = queryResult.rows[0].id;
       // Then turn the ID into a JWT
-      const token = jsonwebtoken.sign(
-        { id: userID },
-        process.env.JWTSECRETKEY!
-      );
+      const token = jsonwebtoken.sign({
+        id: userID
+      }, process.env.JWTSECRETKEY!, { expiresIn: 60 * 60 });
       // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
       res.setHeader("Set-Cookie", `id=${token}; HttpOnly; Secure;`);
       // Send a successful response
@@ -81,7 +80,7 @@ app.post(
           success: true,
         })
       );
-    } catch (e) {
+    } catch (e: any) {
       if (
         e.message ===
         `duplicate key value violates unique constraint "users_email_key"`
@@ -104,7 +103,21 @@ app.post(
   }
 );
 
-app.get("/userinfo")
+app.get("/userinfo", async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const jwt = req.headers.cookie!.split("=")[1];
+    const decoded = jsonwebtoken.verify(jwt, process.env.JWTSECRETKEY!);
+    // Need to figure out how to get ID
+    const userID = decoded.id;
+    /*const client = await pool.connect();
+    const result = await client.query("SELECT first_name, last_name, email FROM users WHERE id=$1", [userID]);
+    */
+  } catch (e) {
+    console.log(e);
+  }
+
+  return res.send("In progress");
+});
 
 app
   .listen(5000, (): void => {
