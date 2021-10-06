@@ -1,9 +1,9 @@
 import express, { json, Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
-import jsonwebtoken from "jsonwebtoken";
+import jsonwebtoken, { Jwt, JwtPayload } from "jsonwebtoken";
 import startUpChecks from "./helpers/startUpChecks";
-import bcrypt, { hash } from "bcrypt";
+import bcrypt, { compareSync, hash } from "bcrypt";
 import cors from "cors";
 
 // Setting up dotenv so the script can read .env variables that should not be hard coded
@@ -69,9 +69,13 @@ app.post(
       // Get the user ID returned from the insert
       const userID = queryResult.rows[0].id;
       // Then turn the ID into a JWT
-      const token = jsonwebtoken.sign({
-        id: userID
-      }, process.env.JWTSECRETKEY!, { expiresIn: 60 * 60 });
+      const token = jsonwebtoken.sign(
+        {
+          id: userID,
+        },
+        process.env.JWTSECRETKEY!,
+        { expiresIn: 60 * 60 }
+      );
       // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
       res.setHeader("Set-Cookie", `id=${token}; HttpOnly; Secure;`);
       // Send a successful response
@@ -105,18 +109,50 @@ app.post(
 
 app.get("/userinfo", async (req: Request, res: Response): Promise<Response> => {
   try {
+    if (req.headers.cookie === undefined) {
+      return res.send(
+        JSON.stringify({
+          success: false,
+          err: "no-jwt"
+        })
+      );
+    }
+    // Get the user ID from the JWT
+    // First parse the JWT value out from the cookie header in which it is sent
     const jwt = req.headers.cookie!.split("=")[1];
-    const decoded = jsonwebtoken.verify(jwt, process.env.JWTSECRETKEY!);
-    // Need to figure out how to get ID
+    // Next verify the value of the JWT with the jsonwebtoken built-in verify
+    const decoded = jsonwebtoken.verify(
+      jwt,
+      process.env.JWTSECRETKEY!
+    ) as JwtPayload;
+    // Then get the id from the decoded token
     const userID = decoded.id;
-    /*const client = await pool.connect();
-    const result = await client.query("SELECT first_name, last_name, email FROM users WHERE id=$1", [userID]);
-    */
+    
+    // Next get the user info by querying it out of the Database
+    const client = await pool.connect();
+    const result = await client.query(
+      "SELECT first_name, last_name, email FROM users WHERE id=$1",
+      [userID]
+    );
+    client.release();
+    const userInfo = result.rows[0]
+    return res.send(
+      JSON.stringify({
+        success: true,
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        email: userInfo.email
+      })
+    );
   } catch (e) {
     console.log(e);
+    return res.send(
+      JSON.stringify({
+        success: false,
+        err: "server-err"
+      })
+    )
   }
-
-  return res.send("In progress");
 });
 
 app

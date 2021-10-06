@@ -100,7 +100,7 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
                 client.release();
                 userID = queryResult.rows[0].id;
                 token = jsonwebtoken_1.default.sign({
-                    id: userID
+                    id: userID,
                 }, process.env.JWTSECRETKEY, { expiresIn: 60 * 60 });
                 // Set the header of the response to set a cookie on the frontend with the JWT to be used in the future when identifying client to server
                 res.setHeader("Set-Cookie", "id=" + token + "; HttpOnly; Secure;");
@@ -127,20 +127,43 @@ app.post("/createuser", function (req, res) { return __awaiter(void 0, void 0, v
     });
 }); });
 app.get("/userinfo", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var jwt, decoded;
+    var jwt, decoded, userID, client, result, userInfo, e_2;
     return __generator(this, function (_a) {
-        try {
-            jwt = req.headers.cookie.split("=")[1];
-            decoded = jsonwebtoken_1.default.verify(jwt, process.env.JWTSECRETKEY);
-            console.log(decoded);
-            /*const client = await pool.connect();
-            const result = await client.query("SELECT first_name, last_name, email FROM users WHERE id=$1", [userID]);
-            */
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                if (req.headers.cookie === undefined) {
+                    return [2 /*return*/, res.send(JSON.stringify({
+                            success: false,
+                            err: "no-jwt"
+                        }))];
+                }
+                jwt = req.headers.cookie.split("=")[1];
+                decoded = jsonwebtoken_1.default.verify(jwt, process.env.JWTSECRETKEY);
+                userID = decoded.id;
+                return [4 /*yield*/, pool.connect()];
+            case 1:
+                client = _a.sent();
+                return [4 /*yield*/, client.query("SELECT first_name, last_name, email FROM users WHERE id=$1", [userID])];
+            case 2:
+                result = _a.sent();
+                client.release();
+                userInfo = result.rows[0];
+                return [2 /*return*/, res.send(JSON.stringify({
+                        success: true,
+                        first_name: userInfo.first_name,
+                        last_name: userInfo.last_name,
+                        email: userInfo.email
+                    }))];
+            case 3:
+                e_2 = _a.sent();
+                console.log(e_2);
+                return [2 /*return*/, res.send(JSON.stringify({
+                        success: false,
+                        err: "server-err"
+                    }))];
+            case 4: return [2 /*return*/];
         }
-        catch (e) {
-            console.log(e);
-        }
-        return [2 /*return*/, res.send("In progress")];
     });
 }); });
 app

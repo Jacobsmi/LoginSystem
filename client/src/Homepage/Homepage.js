@@ -1,9 +1,10 @@
 import { Box } from "@mui/material";
-import { useEffect, } from "react";
+import { useEffect, useState } from "react";
+import { useHistory } from "react-router";
 
 export default function Homepage(){
-
-  //const [firstName, setFirstName] = useState('')
+  const history = useHistory();
+  const [firstName, setFirstName] = useState('')
 
   useEffect(()=>{
     (async () =>{
@@ -12,10 +13,19 @@ export default function Homepage(){
         credentials: "include"
       });
       const apiResJson = await res.json();
-      console.log(apiResJson)
-      
+      if (apiResJson.success === false){
+        if(apiResJson.err === "no-jwt"){
+          history.push("/")
+        }else{
+          console.log("Server Error")
+        }
+      }else{
+        console.log(apiResJson)
+        setFirstName(apiResJson.first_name)
+      }
     })();
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return(
     <Box
       sx={{
@@ -25,7 +35,7 @@ export default function Homepage(){
         bgcolor: "primary.main"
       }}
       >
-        Welcome
+        Welcome, {firstName}
       </Box>
   )
 }
