@@ -3,6 +3,7 @@ import Landing from './Landing/Landing';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Signup from "./Signup/Signup";
 import Homepage from "./Homepage/Homepage";
+import Login from "./Login/Login";
 
 export default function App() {
   const theme = createTheme({
@@ -25,9 +26,12 @@ export default function App() {
       <div className="App">
         <BrowserRouter>
           <Switch>
-            <Switch path="/home">
+            <Route path="/login">
+              <Login />
+            </Route>
+            <Route path="/home">
               <Homepage />
-            </Switch>
+            </Route>
             <Route path="/signup">
               <Signup />
             </Route>
